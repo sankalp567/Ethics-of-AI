@@ -1,6 +1,9 @@
 # Ethics-of-AI
 Spring 2026 - CS621 Project
 
+![project overview](assets/absld-df-stages.png.png)
+
+
 This repository contains experiments on robust and fair classification for CelebA-based binary prediction (target: `Smiling`) under clean and adversarial settings, including teacher training and distillation pipelines.
 
 ## What this project does
