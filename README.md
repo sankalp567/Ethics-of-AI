@@ -3,7 +3,6 @@ Spring 2026 - CS621 Project
 
 ![project overview](assets/absld-df-stages.png)
 
-
 This repository contains experiments on robust and fair classification for CelebA-based binary prediction (target: `Smiling`) under clean and adversarial settings, including teacher training and distillation pipelines.
 
 ## What this project does
@@ -19,36 +18,31 @@ This repository contains experiments on robust and fair classification for Celeb
 Ethics-of-AI/
 ├── README.md
 ├── requirements.txt
+├── config.py                # Unified configuration for all experiments
+├── main-teacher.py          # Entry point: teacher model training
+├── main-distil.py           # Entry point: knowledge distillation training
+├── kd_trainer.py            # Distillation loss and training logic
+│
 ├── core/                    # Shared training/attack/metric logic
 │   ├── attacks.py
 │   ├── trainer.py
 │   ├── kd_trainer.py
 │   └── metrics.py
-├── data/
-│   └── celeba.py            # CelebA dataset + dataloaders
-├── docs/                    # Optional project docs
-├── src-teacher/             # Teacher and baseline training variants
-│   ├── config.py
-│   ├── mainr.py             # ResNet18 teacher training
-│   ├── main.py              # MobileNet-v3-small variant
-│   ├── mainl.py             # MobileNet-v3-large variant
-│   ├── main3.py             # Additional experiment variant
-│   ├── test.py              # Evaluation/testing script
-│   ├── core/                # Local duplicate of core modules
-│   └── data/                # Local duplicate of data loader
-└── src-distil/              # Distillation training variants
-   ├── config.py
-   ├── main.py              # KD pipeline using loaded teacher checkpoint
-   ├── mainl.py             # Alternate distillation variant
-   ├── core/                # Local duplicate of core modules
-   └── data/                # Local duplicate of data loader
+│
+├── data/                    # Data loading (single source of truth)
+│   ├── celeba.py
+│   └── data.ipynb
+│
+├── checkpoints/             # Saved model checkpoints
+├── docs/                    # Project documentation
+└── assets/                  # Images/diagrams for README
 ```
 
 ## Key modules to modify
 
 If you want to change behavior, start from these files:
 
-1. `src-teacher/config.py` and `src-distil/config.py`
+1. `config.py` (root level)
    - Update dataset/checkpoint paths (`DATA_DIR`, `CHECKPOINT_DIR`)
    - Change hyperparameters (`EPOCHS`, `LEARNING_RATE`, `EPSILON`, attack steps)
    - Change fairness target/sensitive attributes (`TARGET_ATTR`, `SENSITIVE_ATTRS`)
@@ -70,14 +64,15 @@ If you want to change behavior, start from these files:
 6. `data/celeba.py`
    - Dataset loading, transforms, split logic, and sensitive-attribute extraction
 
-## Important note on duplicated modules
+## Code organization
 
-The repository currently contains duplicated logic for keeping the separation of concerns under:
-- `core/` and `data/` (root)
-- `src-teacher/core/`, `src-teacher/data/`
-- `src-distil/core/`, `src-distil/data/`
+The codebase now uses a **single source of truth** for all shared modules:
+- `core/` contains all training, attack, and metrics logic used by both teacher and distillation pipelines.
+- `data/` contains all data loading and preprocessing.
+- `config.py` (root) unifies all configuration.
+- Entry points (`main-teacher.py`, `main-distil.py`) import from root-level modules.
 
-When making modifications, keep these copies synchronized or consolidate to a single shared module to avoid behavior drift between experiments.
+This eliminates duplication and ensures consistent behavior across experiments.
 
 ## Data expectations
 
@@ -85,12 +80,12 @@ The dataloader expects the following files under `Config.DATA_DIR`:
 
 ```text
 <DATA_DIR>/
-├── imgs/
+├── img_align_celeba/
 ├── list_attr_celeba.csv
 └── list_eval_partition.csv
 ```
 
-Default path values are currently set inside each `config.py`. Update them before running if your dataset location differs.
+Default path is `celeba-data/` in the project root. Update `DATA_DIR` in `config.py` if your dataset is elsewhere.
 
 ## Installation
 
@@ -102,46 +97,46 @@ pip install -r requirements.txt
 
 ## Running experiments
 
-Run from the corresponding source directory so local imports resolve correctly.
+Run from the project root directory so imports resolve correctly.
 
-### 1) Train teacher (ResNet18 variant)
-
-```bash
-cd src-teacher
-python mainr.py
-```
-
-### 2) Train teacher (MobileNet variants)
+### 1) Train teacher model
 
 ```bash
-cd src-teacher
-python main.py
-python mainl.py
+python main-teacher.py
 ```
 
-### 3) Distillation run
+Optional flags:
+- `--resume` : Resume from last checkpoint
+- `--epochs N` : Train for N epochs (overrides config)
 
 ```bash
-cd src-distil
-python main.py
+python main-teacher.py --resume --epochs 30
 ```
 
-> `src-distil/main.py` uses a teacher checkpoint path defined in `TEACHER_PATH`. Update that path if your checkpoint is elsewhere.
+### 2) Train distilled student model
+
+```bash
+python main-distil.py
+```
+
+The distillation script loads a pre-trained teacher checkpoint. Update `TEACHER_PATH` in `main-distil.py` if using a different checkpoint.
 
 ## Reproducibility checklist
 
-- Confirm `DATA_DIR` and `CHECKPOINT_DIR` in active `config.py`.
-- Keep model entrypoint and config paired (teacher vs distil).
-- Log which script was run (`mainr.py`, `main.py`, `mainl.py`, etc.).
-- Save checkpoint names used for distillation runs.
-- Keep duplicate `core/` and `data/` logic aligned if editing.
+- Confirm `DATA_DIR` and `CHECKPOINT_DIR` in `config.py`.
+- Confirm `TEACHER_PATH` in `main-distil.py` points to a valid checkpoint.
+- Run both scripts from the project root directory.
+- Log output will include clean/robust accuracy and fairness metrics at each epoch.
+- Checkpoints are saved in `CHECKPOINT_DIR` (default: `./checkpoints/`).
 
 ## Minimal development workflow
 
-1. Update config paths/hyperparameters.
-2. Run training script from correct subfolder.
+1. Update paths and hyperparameters in `config.py`.
+2. Run `python main-teacher.py` to train the teacher model.
 3. Inspect printed clean/robust/fairness metrics.
-4. Save checkpoints and logs for comparison.
+4. Update `TEACHER_PATH` in `main-distil.py` to point to the trained checkpoint.
+5. Run `python main-distil.py` to train the distilled student.
+6. Compare fairness metrics between teacher and student.
 
 ## Team
 
