@@ -139,3 +139,12 @@ python main.py
 2. Run training script from correct subfolder.
 3. Inspect printed clean/robust/fairness metrics.
 4. Save checkpoints and logs for comparison.
+
+## Team
+
+| Name | Roll No |
+|---|---|
+| Parv Thacker | 25210095 |
+| Sankalp Turankar | 25210115 |
+| Smrutee Behera | 25250041 |
+| Balbir Prasad | 25210034 |
