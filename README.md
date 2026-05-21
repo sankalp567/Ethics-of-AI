@@ -1,5 +1,5 @@
 # Ethics-of-AI
-Spring 2026 - CS621 Project
+Spring 2026 - CS621 Project - Under Manisha Padala Ma'am
 
 ![project overview](assets/absld-df-stages.png)
 
